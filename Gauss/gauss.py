@@ -119,6 +119,8 @@ class Test:
         self.b = b_copy
 
     def relax_method(self):
+        if self.determinant == 0:
+            return
         res = [0] * self.n
         t = [0] * self.n
         for k in range(self.max_iterations):
@@ -152,13 +154,15 @@ class Test:
         return res
 
 
-def out_matrix(a):
+def out_matrix(a, c):
     if a is None:
         return
     n = len(a)
     if n > 20:
         print('too much size')
         return
+    if c is not None:
+        print(c)
     print("##########################################")
     for i in range(n):
         for j in range(n - 1):
@@ -208,7 +212,7 @@ def main():
             exit(0)
     matrix.gaus()
     matrix.relax_method()
-    out_matrix(matrix.get_invert_matrix())
+    out_matrix(matrix.get_invert_matrix(), "Invert Matrix:")
 
 
 if __name__ == "__main__":
