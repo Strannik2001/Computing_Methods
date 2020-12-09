@@ -7,6 +7,9 @@ class Test:
     def __init__(self, mode, n, a, b=1):
         self.mode = mode
         self.n = n
+        self.accuracy = 1e-9
+        self.max_iterations = 1000
+        self.omega = 4 / 3
         self.need_optimization = b
         self.matrix = []
         self.b = []
@@ -64,6 +67,13 @@ class Test:
 
     def gaus(self):
         sign = 1
+        matrix_copy = []
+        b_copy = []
+        for i in range(self.n):
+            b_copy.append(self.b[i])
+            matrix_copy.append([])
+            for j in self.matrix[i]:
+                matrix_copy[i].append(j)
         for i in range(self.n):
             if self.need_optimization:
                 maxi = i
@@ -95,15 +105,51 @@ class Test:
                 self.invert_matrix[j] = [self.invert_matrix[j][z] - self.matrix[j][i] * self.invert_matrix[i][z] for z in range(self.n)]
                 self.b[j] -= self.b[i] * self.matrix[j][i]
                 self.matrix[j] = [self.matrix[j][z] - self.matrix[j][i] * self.matrix[i][z] for z in range(self.n)]
+        self.matrix = matrix_copy
         if self.determinant == 0:
+            self.b = b_copy
             print("No invert_matrix(((")
             return
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        print("Answer")
+        print("Answer by gaus method")
         for j in range(self.n - 1):
             print("%015.10f" % self.b[j], end='  |^|  ')
         print("%015.10f" % self.b[self.n - 1])
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        self.b = b_copy
+
+    def relax_method(self):
+        res = [0] * self.n
+        t = [0] * self.n
+        for k in range(self.max_iterations):
+            for i in range(self.n):
+                s1 = 0
+                s2 = 0
+                for j in range(i):
+                    s1 += self.matrix[i][j] * t[j]
+                for j in range(i, self.n):
+                    s2 += self.matrix[i][j] * res[j]
+                t[i] = res[i] + (self.omega / self.matrix[i][i]) * (self.b[i] - s1 - s2)
+            d = 0
+            for i in range(self.n):
+                d += (res[i] - t[i]) * (res[i] - t[i])
+            if d < self.accuracy:
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                print("Answer by relax method")
+                for j in range(self.n - 1):
+                    print("%015.10f" % t[j], end='  |^|  ')
+                print("%015.10f" % t[self.n - 1])
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                return t
+            for i in range(self.n):
+                res[i] = t[i]
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        print("Answer by relax method")
+        for j in range(self.n - 1):
+            print("%015.10f" % res[j], end='  |^|  ')
+        print("%015.10f" % res[self.n - 1])
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        return res
 
 
 def out_matrix(a):
@@ -161,6 +207,7 @@ def main():
             out_usage()
             exit(0)
     matrix.gaus()
+    matrix.relax_method()
     out_matrix(matrix.get_invert_matrix())
 
 
