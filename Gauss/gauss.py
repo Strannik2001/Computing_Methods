@@ -55,6 +55,13 @@ class Test:
             m = self.matrix
         out_matrix(m)
 
+    def get_invert_matrix(self):
+        if self.determinant != 0:
+            return self.invert_matrix
+        else:
+            print("No such matrix")
+            return None
+
     def gaus(self):
         sign = 1
         for i in range(self.n):
@@ -69,6 +76,9 @@ class Test:
                 self.matrix[i], self.matrix[maxi] = self.matrix[maxi], self.matrix[i]
                 self.invert_matrix[i], self.invert_matrix[maxi] = self.invert_matrix[maxi], self.invert_matrix[i]
             cur = self.matrix[i][i]
+            if cur == 0:
+                self.determinant = 0
+                continue
             self.determinant *= cur
             self.matrix[i] = [z / cur for z in self.matrix[i]]
             self.b[i] /= cur
@@ -85,6 +95,9 @@ class Test:
                 self.invert_matrix[j] = [self.invert_matrix[j][z] - self.matrix[j][i] * self.invert_matrix[i][z] for z in range(self.n)]
                 self.b[j] -= self.b[i] * self.matrix[j][i]
                 self.matrix[j] = [self.matrix[j][z] - self.matrix[j][i] * self.matrix[i][z] for z in range(self.n)]
+        if self.determinant == 0:
+            print("No invert_matrix(((")
+            return
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         print("Answer")
         for j in range(self.n - 1):
@@ -92,8 +105,14 @@ class Test:
         print("%015.10f" % self.b[self.n - 1])
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 
+
 def out_matrix(a):
+    if a is None:
+        return
     n = len(a)
+    if n > 20:
+        print('too much size')
+        return
     print("##########################################")
     for i in range(n):
         for j in range(n - 1):
@@ -114,19 +133,35 @@ def mul_matrix(a, b):
     return res
 
 
+def out_usage():
+    print("##Usage##")
+    print("First argument - 'static' or 'dynamic'")
+    print("Second argument - matrix order")
+    print("Third argument - path_to_file if static, starting number if dynamic")
+
+
 def main():
-    if sys.argv[1] == 'static':
-        matrix = Test('static', int(sys.argv[2]), sys.argv[3])
-    elif sys.argv[1] == 'dynamic':
-        matrix = Test('dynamic', int(sys.argv[2]), float(sys.argv[3]))
-    else:
-        print("##Usage##")
-        print("First argument - 'static' or 'dynamic'")
-        print("Second argument - rang of matrix")
-        print("Third argument - path_to_file if static, starting number if dynamic")
-        exit(0)
+    try:
+        if sys.argv[1] == 'static':
+            matrix = Test('static', int(sys.argv[2]), sys.argv[3])
+        elif sys.argv[1] == 'dynamic':
+            matrix = Test('dynamic', int(sys.argv[2]), float(sys.argv[3]))
+        else:
+            out_usage()
+            exit(0)
+    except:
+        out_usage()
+        print("Type parameters")
+        a = input().split()
+        if a[0] == 'static':
+            matrix = Test('static', int(a[1]), a[2])
+        elif a[0] == 'dynamic':
+            matrix = Test('dynamic', int(a[1]), float(a[2]))
+        else:
+            out_usage()
+            exit(0)
     matrix.gaus()
-    out_matrix(matrix.invert_matrix)
+    out_matrix(matrix.get_invert_matrix())
 
 
 if __name__ == "__main__":
