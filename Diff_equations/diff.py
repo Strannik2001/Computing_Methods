@@ -45,7 +45,6 @@ def Runge_Kutta(mode, x_l, x_r, y, n, f):
             cur[0] = x_l + i * h
             cur[1] = last
             coef[0] = np.fromiter((f[j](cur[0], cur[1]) for j in range(c)), float)
-            print(coef[0])
             coef[1] = np.fromiter((f[j](cur[0] + .5 * h, cur[1] + .5 * h * coef[0]) for j in range(c)), float)
             coef[2] = np.fromiter((f[j](cur[0] + .5 * h, cur[1] + .5 * h * coef[1]) for j in range(c)), float)
             coef[3] = np.fromiter((f[j](cur[0] + h, cur[1] + h * coef[2]) for j in range(c)), float)
@@ -76,41 +75,60 @@ def boundary_problem(n, l, r, y, funcs):
     return graph
 
 
+def calc(x, y):
+    err = 0
+    for i in range(len(y)):
+        err += abs((x[i] - y[i]))
+    return err / len(y)
+
+
+DEBUG = 0
+
+
 def main():
     mode, test = map(int, input().split())
-    npoints = 50
-    preciseans = 1000
-    plt.figure(figsize=(20, 10))
+    npoints = 60
     if mode == 0:
         left = [0, 0]
         right = [1, 1]
         funcs = [f.f0, f.f1]
         funcs_solutions = [f.f0_solution, f.f1_solution]
         initializers = [10, 2]
-        x = np.linspace(left[test], right[test], preciseans)
-        plt.plot(x, funcs_solutions[test](x), color='blue', label='Solution')
-        runge_res1 = Runge_Kutta(0, left[test], right[test], initializers[test], npoints - 1, funcs[test])
-        plt.plot(np.linspace(left[test], right[test], npoints), runge_res1, 'o', color='red', label="SecondOrder")
-        runge_res2 = Runge_Kutta(1, left[test], right[test], initializers[test], npoints - 1, funcs[test])
-        plt.plot(np.linspace(left[test], right[test], npoints), runge_res2, 'o', color='green', label="FourthOrder")
+        x = np.linspace(left[test], right[test], npoints + 1)
+        y = funcs_solutions[test](x)
+        plt.plot(x, y, color='blue', label='Solution')
+        runge_res1 = Runge_Kutta(0, left[test], right[test], initializers[test], npoints, funcs[test])
+        plt.plot(np.linspace(left[test], right[test], npoints + 1), runge_res1, 'o', color='red', label="SecondOrder")
+        runge_res2 = Runge_Kutta(1, left[test], right[test], initializers[test], npoints, funcs[test])
+        err1 = calc(runge_res1, y)
+        err2 = calc(runge_res2, y)
+        print(err1, err2)
+        plt.plot(np.linspace(left[test], right[test], npoints + 1), runge_res2, 'o', color='green', label="FourthOrder")
         plt.grid()
         plt.legend()
-        plt.show()
+        plt.savefig("Graphics/{}.{}.png".format(mode, test))
+        if DEBUG == 0:
+            plt.show()
     elif mode == 1:
         left = [0, 0]
         right = [1, 1]
         funcs = [[f.system1_y1, f.system1_y2], [f.system4_y1, f.system4_y2]]
         funcs_solutions = [None, [f.system4_y1_solution, f.system4_y2_solution]]
         initializers = [[.5, 1], [1, 1]]
+        x = np.linspace(left[test], right[test], npoints + 1)
         if funcs_solutions[test] is not None:
-            x = np.linspace(left[test], right[test], preciseans)
             plt.plot(x, funcs_solutions[test][0](x), color='blue', label='SolutionY1')
             plt.plot(x, funcs_solutions[test][1](x), color='green', label='SolutionY2')
         runge_res1 = Runge_Kutta(3, left[test], right[test], initializers[test], npoints, funcs[test])
-        plt.plot(np.linspace(left[test], right[test], npoints + 1), runge_res1[0], 'o', label='Y1')
-        plt.plot(np.linspace(left[test], right[test], npoints + 1), runge_res1[1], 'o', label='Y2')
+        plt.plot(x, runge_res1[0], 'o', label='x(t)')
+        plt.plot(x, runge_res1[1], 'o', label='y(t)')
+        if funcs_solutions[test] is not None:
+            err1 = calc(funcs_solutions[test][0](x), runge_res1[0])
+            err2 = calc(funcs_solutions[test][1](x), runge_res1[1])
+            print(err1, err2)
         plt.grid()
         plt.legend()
+        plt.savefig("Graphics/{}.{}.png".format(mode, test))
         plt.show()
     else:
         left = [0, 0, 0]
@@ -118,17 +136,19 @@ def main():
         funcs = [[f.p1, f.q1, f.func1], [f.p2, f.q2, f.func2], [f.p3, f.q3, f.func3]]
         funcs_solutions = [None, f.Bundle2_solution, f.Bundle3_solution]
         initializers = [[[0, .5], [1, 1], [1.3, 2]], [[1, -1], [0, 1], [-1, 2]], [[1, 1], [0, 0], [0, 0]]]
+        x = np.linspace(left[test], right[test], npoints + 1)
         if funcs_solutions[test] is not None:
-            x = np.linspace(left[test], right[test], preciseans)
             plt.plot(x, funcs_solutions[test](x), color='blue', label="Solution")
         res = boundary_problem(npoints, left[test], right[test], initializers[test], funcs[test])
-        plt.plot(np.linspace(left[test], right[test], npoints + 1), res, 'o', label='y')
+        if funcs_solutions[test] is not None:
+            err1 = calc(funcs_solutions[test](x), res)
+            print(err1)
+        plt.plot(x, res, 'o', label='y(x)')
         plt.grid()
         plt.legend()
+        plt.savefig("Graphics/{}.{}.png".format(mode, test))
         plt.show()
-    #res = boundary_problem(npoints, left, right, , f.p1, f.q1, f.func1)
-    #
-    #res = boundary_problem(npoints, left, right, [1, .5], [0, -1], [2, 1], f.p2, f.q2, f.func2)
+
 
 if __name__ == "__main__":
     main()
