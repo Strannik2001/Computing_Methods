@@ -9,7 +9,7 @@ class Test:
         self.n = n
         self.accuracy = 1e-9
         self.max_iterations = 1000
-        self.omega = 4 / 3
+        self.omega = 2 / 3
         self.need_optimization = b
         self.matrix = []
         self.b = []
@@ -141,17 +141,25 @@ class Test:
                 for j in range(self.n - 1):
                     print("%015.10f" % t[j], end='  |^|  ')
                 print("%015.10f" % t[self.n - 1])
+                print("Iterations - {}".format(k))
                 print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 return t
             for i in range(self.n):
                 res[i] = t[i]
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        print("Answer by relax method")
-        for j in range(self.n - 1):
-            print("%015.10f" % res[j], end='  |^|  ')
-        print("%015.10f" % res[self.n - 1])
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         return res
+
+    def get_cond(self):
+        if self.determinant == 0:
+            return 0
+        r1 = 0
+        for i in self.matrix:
+            for j in i:
+                r1 = max(r1, abs(j))
+        r2 = 0
+        for i in self.invert_matrix:
+            for j in i:
+                r2 = max(r2, abs(j))
+        print("Cond num = {}".format(r1 * r2))
 
 
 def out_matrix(a, c):
@@ -188,13 +196,16 @@ def out_usage():
     print("First argument - 'static' or 'dynamic'")
     print("Second argument - matrix order")
     print("Third argument - path_to_file if static, starting number if dynamic")
+    print("Example:\nstatic 4 StaticTests/test1.txt")
 
 
 def main():
+    ty = 'static'
     try:
         if sys.argv[1] == 'static':
             matrix = Test('static', int(sys.argv[2]), sys.argv[3])
         elif sys.argv[1] == 'dynamic':
+            ty = 'dynamic'
             matrix = Test('dynamic', int(sys.argv[2]), float(sys.argv[3]))
         else:
             out_usage()
@@ -206,13 +217,16 @@ def main():
         if a[0] == 'static':
             matrix = Test('static', int(a[1]), a[2])
         elif a[0] == 'dynamic':
+            ty = 'dynamic'
             matrix = Test('dynamic', int(a[1]), float(a[2]))
         else:
             out_usage()
             exit(0)
     matrix.gaus()
-    matrix.relax_method()
+    if ty != 'dynamic':
+        matrix.relax_method()
     out_matrix(matrix.get_invert_matrix(), "Invert Matrix:")
+    matrix.get_cond()
 
 
 if __name__ == "__main__":
